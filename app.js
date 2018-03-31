@@ -4,6 +4,7 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var mongoose = require('mongoose');
 
 var db = require('./models/db');
 var article = require('./models/articles');
@@ -13,6 +14,10 @@ var users = require('./routes/users');
 var article = require('./routes/article');
 
 var app = express();
+
+// connect to mongodb
+mongoose.connect('mongodb://localhost/mongonewsscraper');
+mongoose.Promise = global.Promise;
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
