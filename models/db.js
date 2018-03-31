@@ -1,2 +1,2 @@
-var mongoose = require('mongoose');
-mongoose.connect('mongodb://localhost/nodewebappdb');
+// var mongoose = require('mongoose');
+// mongoose.connect('mongodb://localhost/nodewebappdb');
