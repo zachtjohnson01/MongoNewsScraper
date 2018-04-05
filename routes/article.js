@@ -3,77 +3,46 @@ var router = express.Router();
 
 var request = require('request');
 var cheerio = require('cheerio');
+var axios = require('axios');
 
-var Article = require('../models/articles');
+var Article = require('../models/article');
+// var db = require('../models');
 
-// middleware that is specific to this router
-// router.use(function timeLog (req, res) {
-//     console.log('Time: ', Date.now())
-//     // next()
-//   });
-
-/* GET home page. */
-router.get('/onion', function(req, res) {
-
-    request('https://www.theonion.com/', function (error, response, html) {
-        
-        // Load the body of the HTML into cheerio
-        var $ = cheerio.load(html);
-        
-        // Empty array to save our scraped data
-        var results = [];
-
-        // With cheerio, find each h4-tag with the class "headline-link" and loop through the results
-        $("h1.entry-title").each(function(i, element) {
-
-            // console.log(element);
-            // Save the text of the h4-tag as "title"
-            var title = $(element).text();
-            var link = $(element).children().attr('href');
-
-            // Make an object with data we scraped for this h4 and push it to the results array
-            results.push({
-                title: title,
-                link: link
-            });
-        
-        })
-    // res.render('index', { title: 'Mongo Scraper' });
-    res.send(results);
+// A GET route for scraping the echojs website
+router.get("/scrape", function(req, res) {
+    // First, we grab the body of the html with request
+    axios.get("http://www.echojs.com/").then(function(response) {
+      // Then, we load that into cheerio and save it to $ for a shorthand selector
+      var $ = cheerio.load(response.data);
+  
+      // Now, we grab every h2 within an article tag, and do the following:
+      $("article h2").each(function(i, element) {
+        // Save an empty result object
+        var result = {};
+  
+        // Add the text and href of every link, and save them as properties of the result object
+        result.title = $(this)
+          .children("a")
+          .text();
+        result.link = $(this)
+          .children("a")
+          .attr("href");
+  
+        // Create a new Article using the `result` object built from scraping
+        Article.create(result)
+          .then(function(dbArticle) {
+            // View the added result in the console
+            console.log(dbArticle);
+          })
+          .catch(function(err) {
+            // If an error occurred, send it to the client
+            return res.json(err);
+          });
+      });
+  
+      // If we were able to successfully scrape and save an Article, send a message to the client
+      res.send("Scrape Complete");
     });
-});
-/* GET home page. */
-router.post('/onion', function(req, res) {
-
-    Article.create(req.body).then(function(article) {
-        request('https://www.theonion.com/', function (error, response, html) {
-            
-            // Load the body of the HTML into cheerio
-            var $ = cheerio.load(html);
-            
-            // Empty array to save our scraped data
-            var results = [];
-    
-            // With cheerio, find each h4-tag with the class "headline-link" and loop through the results
-            $("h1.entry-title").each(function(i, element) {
-    
-                // console.log(element);
-                // Save the text of the h4-tag as "title"
-                var title = $(element).text();
-                var link = $(element).children().attr('href');
-    
-                // Make an object with data we scraped for this h4 and push it to the results array
-                results.push({
-                    title: title,
-                    link: link
-                });
-            })
-        // res.render('index', { title: 'Mongo Scraper' });
-        res.send(results);
-        });
-    });
-
-});
-
+  });
 
 module.exports = router;
